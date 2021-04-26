@@ -1,7 +1,10 @@
 package mapreduce
 
 import (
+	"encoding/json"
 	"hash/fnv"
+	"io/ioutil"
+	"os"
 )
 
 // doMap does the job of a map worker: it reads one of the input files
@@ -41,6 +44,38 @@ func doMap(
 	//
 	// Remember to close the file after you have written all the values!
 	// Use checkError to handle errors.
+
+	// 1. Read the file
+	data, err := ioutil.ReadFile(inFile)
+	checkError(err)
+
+	// get the contents of the file
+	fcontent := string(data)
+	// get the key value pairs
+	keyVal := mapF(inFile, fcontent)
+
+	// loop trough nreduce to create that number of files
+	for i := 0; i < nReduce; i++ {
+		//get the name of the temp file
+		tmpFileName := reduceName(jobName, mapTaskNumber, i)
+		// create a new tmp file with the reduced name
+		tmpf, err := os.OpenFile(tmpFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		checkError(err)
+		//frite encoded data to the file
+		enc := json.NewEncoder(tmpf)
+		for _, kv := range keyVal {
+
+			//find if a key belongs in the current file
+			hashedReduced := ihash(kv.Key) % uint32(nReduce)
+			if hashedReduced == uint32(i) {
+				err := enc.Encode(&kv)
+				checkError(err)
+			}
+		}
+		//close the file when done
+		err = tmpf.Close()
+		checkError(err)
+	}
 
 }
 
