@@ -21,6 +21,41 @@ func (mr *Master) schedule(phase jobPhase) {
 	// multiple tasks.
 	//
 	// TODO:
+	println("in schedule")
+	//loop trough n tasks and assign them
+	var wg sync.WaitGroup
+	println(ntasks)
+	for i := 0; i < ntasks; i++ {
+
+		println(i)
+		wg.Add(1)
+		// w := new(Worker)
+		dTask := new(DoTaskArgs)
+		dTask.JobName = mr.jobName
+		dTask.File = mr.files[i]
+		dTask.Phase = phase
+		dTask.TaskNumber = i
+		dTask.NumOtherPhase = nios
+		go func() {
+			for {
+				w := <-mr.registerChannel
+				var reply ShutdownReply
+				ok := call(w, "Worker.DoTask", dTask, &reply)
+				if ok {
+					go func() {
+						mr.registerChannel <- w
+					}()
+					wg.Done()
+					break
+
+				}
+
+			}
+
+		}()
+	}
+	println("waiting")
+	wg.Wait()
 
 	debug("Schedule: %v phase done\n", phase)
 }
