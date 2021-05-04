@@ -23,30 +23,33 @@ func (mr *Master) schedule(phase jobPhase) {
 	// multiple tasks.
 	//
 	// TODO:
-	//println("in schedule")
+
 	//loop trough n tasks and assign them
 	var wg sync.WaitGroup
 	println(ntasks)
 	for i := 0; i < ntasks; i++ {
 
-		//println(i)
+		// add new task to wait group
 		wg.Add(1)
-		// w := new(Worker)
+		// create dtask args
 		dTask := new(DoTaskArgs)
 		dTask.JobName = mr.jobName
 		dTask.File = mr.files[i]
 		dTask.Phase = phase
 		dTask.TaskNumber = i
 		dTask.NumOtherPhase = nios
+
 		go func() {
-			for {
-				w := <-mr.registerChannel
-				var reply ShutdownReply
-				ok := call(w, "Worker.DoTask", dTask, &reply)
-				if ok {
-					go func() {
+			for { // loop in case of failure
+				w := <-mr.registerChannel                     // get open worker
+				var reply ShutdownReply                       // can be any pointer but this for simplicity
+				ok := call(w, "Worker.DoTask", dTask, &reply) // call do task on worker
+				if ok {                                       // if no errors
+					go func() { // free worker
+						// in goroutine to prevent deadlock
 						mr.registerChannel <- w
 					}()
+					// deccrement wait group
 					wg.Done()
 					break
 
@@ -56,7 +59,7 @@ func (mr *Master) schedule(phase jobPhase) {
 
 		}()
 	}
-	//println("waiting")
+	// wait for all to finish
 	wg.Wait()
 
 	debug("Schedule: %v phase done\n", phase)
