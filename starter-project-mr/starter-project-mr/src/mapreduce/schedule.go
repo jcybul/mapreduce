@@ -23,13 +23,13 @@ func (mr *Master) schedule(phase jobPhase) {
 	// multiple tasks.
 	//
 	// TODO:
-	println("in schedule")
+	//println("in schedule")
 	//loop trough n tasks and assign them
 	var wg sync.WaitGroup
 	println(ntasks)
 	for i := 0; i < ntasks; i++ {
 
-		println(i)
+		//println(i)
 		wg.Add(1)
 		// w := new(Worker)
 		dTask := new(DoTaskArgs)
@@ -56,7 +56,7 @@ func (mr *Master) schedule(phase jobPhase) {
 
 		}()
 	}
-	println("waiting")
+	//println("waiting")
 	wg.Wait()
 
 	debug("Schedule: %v phase done\n", phase)

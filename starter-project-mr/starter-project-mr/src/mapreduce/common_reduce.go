@@ -40,7 +40,7 @@ func doReduce(
 	// Use checkError to handle errors.
 
 	//1 loop trough the files we created in map
-
+	// generate the key value map
 	kvmap := make(map[string][]string)
 
 	for i := 0; i < nMap; i++ {
@@ -72,6 +72,7 @@ func doReduce(
 	openmn, err := os.OpenFile(mn, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	checkError(err)
 
+	// call the reduce function and write the results
 	enc := json.NewEncoder(openmn)
 	for key, val := range kvmap {
 		wrt := reduceF(key, val)

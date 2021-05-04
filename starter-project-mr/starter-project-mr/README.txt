@@ -9,8 +9,8 @@ Finally, if you are unsure how to start the project, we recommend you visit offi
 Team members
 -----------------
 
-1. Alice (alice@wpi.edu)
-2. Bob (bob@wpi.edu)
+1. Truman Larson (tlarson@wpi.edu)
+2. Joseph Cybul (jcybul@wpi.edu)
 
 Design Questions
 ------------------
@@ -60,6 +60,16 @@ Just give submission full points for this question.
 (2 point) 6. The current design and implementation uses a number of RPC methods. Can you find out all the RPCs and list their signatures? Briefly describe the criteria
 a method needs to satisfy to be considered a RPC method. (Hint: you can look up at: https://golang.org/pkg/net/rpc/)
 
+Worker.DoTask
+Worker.Shutdown
+Master.Shutdown
+Master.Register
+
+The method and its type must be exported. 
+
+It must have two types with the second type being a pointer to a reply block. 
+
+It must return and error type.
 
 7. We provide a bash script called `main/test-wc-distributed.sh` that allows testing the distributed MapReduce implementation.
 
@@ -67,5 +77,25 @@ Errata
 ------
 
 Describe any known errors, bugs, or deviations from the requirements.
+
+Mapping: 
+    No known issues with mapping. For common_map we utilized the json encoding to write to all of the
+reduce files. To determine if a given key should be in a corresponding file, we use the hash mod the
+number of reduce files and include it if that matches the current file number.
+
+Reducing:
+    No known errors. Two core loops control this functionality: 1 to get the mapped contents into memory
+and another to call the reduce function on each key value pair.
+
+Scheduling:
+No known errors.
+
+    For each ntask, we generate a dtask args struct and start a goroutine to call a worker. We add 
+1 to the wait group to indicate that we have another task to complete.To find an avaiable worker,
+we get one from the mr.registerChannel and call Worker.DoTask on that. If the result is without 
+error, we try to free that worker by putting it back in the mr.registerChannel and decrement 
+the wait group. If there is an error with that worker, we will loop back and try to get a new 
+worker and repeat the process. After all workers are scheduled, we wait for the wait group to 
+finish which indicates that we are done with this phase. 
 
 ---
